@@ -39,6 +39,7 @@ version: '3'
 #            - ./www:/var/www
     mysql:
         image: mysql
+        container_name: mysql
         restart: always
         # присваимаем ip-адрес
 #        networks:
@@ -79,7 +80,7 @@ version: '3'
 
 # Сервис Joomla
     joomla:
-        image: joomla
+        image: bitnami/joomla:latest
         container_name: joomla
         restart: always
 # маршрутизируем порты
