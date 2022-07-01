@@ -1,42 +1,42 @@
 # Версия docker-compose
 version: '3'
 # Список наших сервисов (контейнеров)
-services:
-    nginx:
-        # используем последний стабильный образ nginx
-        image: nginx:latest
-        restart: always
-        # присваимаем ip-адрес
-#        networks:
-#            private_network:
-#                ipv4_address: 172.16.0.3
-        # маршрутизируем порты
-        ports:
-            - "80:80"
-            - "443:443"
-        # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
-        volumes:
-            - ./hosts:/etc/nginx/conf.d
-            - ./www:/var/www
-            - ./logs/nginx:/var/log/nginx
-        # nginx должен общаться с php контейнером
-        links:
-            - php
-        
-    php:
-        # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
-        build: ./images/php
-        restart: always
-        # присваимаем ip-адрес
-#        networks:
-#            private_network:
-#                ipv4_address: 172.16.0.4
-        # этот образ будет общаться с mysql
-        links:
-            - mysql
-        # монтируем директорию с проектами
-        volumes:
-            - ./www:/var/www
+#services:
+#    nginx:
+#        # используем последний стабильный образ nginx
+#        image: nginx:latest
+#        restart: always
+#        # присваимаем ip-адрес
+##        networks:
+##            private_network:
+##                ipv4_address: 172.16.0.3
+#        # маршрутизируем порты
+#        ports:
+#            - "80:80"
+#            - "443:443"
+#        # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+#        volumes:
+#            - ./hosts:/etc/nginx/conf.d
+#            - ./www:/var/www
+#            - ./logs/nginx:/var/log/nginx
+#        # nginx должен общаться с php контейнером
+#        links:
+#            - php
+#
+#    php:
+#        # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
+#        build: ./images/php
+#        restart: always
+#        # присваимаем ip-адрес
+##        networks:
+##            private_network:
+##                ipv4_address: 172.16.0.4
+#        # этот образ будет общаться с mysql
+#        links:
+#            - mysql
+#        # монтируем директорию с проектами
+#        volumes:
+#            - ./www:/var/www
     mysql:
         image: mysql
         restart: always
@@ -84,7 +84,7 @@ services:
         restart: always
 # маршрутизируем порты
         ports:
-            - 8082:80
+            - 80:80
 # joomla олжен общаться с контейнером
         links:
             - mysql:mysql
