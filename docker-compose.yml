@@ -25,11 +25,6 @@ services:
       - 'joomla_data:/bitnami/joomla'
     depends_on:
       - mariadb
-volumes:
-  mariadb_data:
-    driver: local
-  joomla_data:
-    driver: local
 
 # Сервис сбора метрик сервера
     node-exporter:
@@ -62,3 +57,8 @@ volumes:
         - DATA_SOURCE_NAME=${MYSQL_USER_EXPORTER}:${MYSQL_PASSWORD_EXPORTER}@(mysql:3306)/
         ports:
             - 9104:9104
+volumes:
+  mariadb_data:
+    driver: local
+  joomla_data:
+    driver: local
