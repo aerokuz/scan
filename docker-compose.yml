@@ -1,31 +1,83 @@
-version: '2'
+# Версия docker-compose
+version: '3'
+# Список наших сервисов (контейнеров)
 services:
-    mariadb:
-      image: docker.io/bitnami/mariadb:10.6
-      environment:
-        # ALLOW_EMPTY_PASSWORD is recommended only for development.
-        - ALLOW_EMPTY_PASSWORD=yes
-        - MARIADB_USER=bn_joomla
-        - MARIADB_DATABASE=bitnami_joomla
-      volumes:
-        - 'mariadb_data:/bitnami/mariadb'
-    joomla:
-      image: docker.io/bitnami/joomla:4
-      ports:
-        - '80:8080'
-        - '443:8443'
-      environment:
-        - JOOMLA_DATABASE_HOST=mariadb
-        - JOOMLA_DATABASE_PORT_NUMBER=3306
-        - JOOMLA_DATABASE_USER=bn_joomla
-        - JOOMLA_DATABASE_NAME=bitnami_joomla
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-        - ALLOW_EMPTY_PASSWORD=yes
-      volumes:
-        - 'joomla_data:/bitnami/joomla'
-      depends_on:
-        - mariadb
+#    nginx:
+#        # используем последний стабильный образ nginx
+#        image: nginx:latest
+#        restart: always
+#        # присваимаем ip-адрес
+##        networks:
+##            private_network:
+##                ipv4_address: 172.16.0.3
+#        # маршрутизируем порты
+#        ports:
+#            - "80:80"
+#            - "443:443"
+#        # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+#        volumes:
+#            - ./hosts:/etc/nginx/conf.d
+#            - ./www:/var/www
+#            - ./logs/nginx:/var/log/nginx
+#        # nginx должен общаться с php контейнером
+#        links:
+#            - php
+#            - phpmyadmin
+#
+#    php:
+#        # у нас свой образ для PHP, указываем путь к нему и говорим что его надо собрать
+#        build: ./images/php
+#        restart: always
+#        # присваимаем ip-адрес
+##        networks:
+##            private_network:
+##                ipv4_address: 172.16.0.4
+#        # этот образ будет общаться с mysql
+#        links:
+#            - mysql
+#        # монтируем директорию с проектами
+#        volumes:
+#            - ./www:/var/www
+    mysql:
+        image: mysql
+        restart: always
+        # присваимаем ip-адрес
+#        networks:
+#            private_network:
+#                ipv4_address: 172.16.0.5
+        ports:
+            - "3306:3306"
+        volumes:
+#          - mysql:/var/lib/mysql
+          - ./mysql_dump:/mnt/mysql_dump
+          - ./logs/mysql:/var/log/mysql
+          - ./mysql:/var/lib/mysql
+          - ./mysql-files:/var/lib/mysql-files
+          - ./data:/docker-entrypoint-initdb.d
+          - ./etc/mysql:/etc/mysql/conf.d
+        # задаем пароль для root пользователя
+        # заливку дампа сайта и создание пользователя для доступа к базе снаружи будем делать позже 
+        environment:
+            MYSQL_ROOT_PASSWORD: "@dm1nL0c"
+            MYSQL_DATABASE: mt
 
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+#        networks:
+#            private_network:
+#                ipv4_address: 172.16.0.5
+        links:
+            - mysql
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            PMA_ARBITRARY: 1
+        restart: always
+        ports:
+            - 8081:80
+#        volumes:
+#          - ./phpmyadmin/apache2/:/etc/apache2
+#    mysql:
 # Сервис сбора метрик сервера
     node-exporter:
         image: prom/node-exporter
@@ -36,6 +88,27 @@ services:
             - /proc:/host/proc:ro
             - /sys:/host/sys:ro
             - /:/rootfs:ro
+
+# Сервис Joomla
+    joomla:
+        image: joomla
+        container_name: joomla
+        restart: always
+# маршрутизируем порты
+        ports:
+            - 80:80
+# joomla олжен общаться с контейнером
+        links:
+            - mysql:mysql
+# Конфигурация joomla
+        environment:
+            - JOOMLA_DB_HOST=mysql:3306
+            - JOOMLA_DB_PASSWORD=@dm1nL0c
+        volumes:
+            - ./www/mt:/var/www/html:rw
+            - ./hosts/joomla:/etc/apache2/sites-available
+
+
 # Сервис метрик из Docker контейнеров
     cadvisor-exporter:
         container_name: "cadvisor-exporter"
@@ -57,8 +130,15 @@ services:
         - DATA_SOURCE_NAME=${MYSQL_USER_EXPORTER}:${MYSQL_PASSWORD_EXPORTER}@(mysql:3306)/
         ports:
             - 9104:9104
-volumes:
-  mariadb_data:
-    driver: local
-  joomla_data:
-    driver: local
+    #mem_limit: 128m           # for docker-compose v2 only
+    #mem_reservation: 64m      # for docker-compose v2 only
+#    logging:
+#        driver: "json-file"
+#        options:
+#            max-size: "5m"
+networks: 
+  private_network: 
+    ipam: 
+      driver: default 
+      config:
+        - subnet: 172.16.0.0/24
