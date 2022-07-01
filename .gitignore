@@ -1,0 +1,4 @@
+/**/*.log
+/mysql_dump/*
+/mysql/*
+www/mt/scripts/videoauk/error_*.*
