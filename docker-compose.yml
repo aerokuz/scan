@@ -40,8 +40,9 @@ services:
 #            - ./www:/var/www
     mysql:
         image: mysql
+        container_name: mysql
         restart: always
-        # присваимаем ip-адрес
+         # присваимаем ip-адрес
 #        networks:
 #            private_network:
 #                ipv4_address: 172.16.0.5
@@ -63,6 +64,7 @@ services:
 
     phpmyadmin:
         image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
 #        networks:
 #            private_network:
 #                ipv4_address: 172.16.0.5
